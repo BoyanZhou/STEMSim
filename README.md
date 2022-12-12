@@ -27,7 +27,7 @@ https://github.com/CAMI-challenge/CAMISIM
 
 ## Usage
 
-There are following steps for analysis of longitudinal metagenomic data using LongStrain.
+There are two models for mutation generation in longitudinal metagenomic data using STEMSim.
 
 ### Mode1: camisim
 Under this mode, stemsim takes the output directory of CAMISIM as input directory, and generate longitudinal mutations on the simulated raw sequencing data.   
