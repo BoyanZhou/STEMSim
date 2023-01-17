@@ -1,9 +1,8 @@
-
-
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import stats
 from matplotlib import style
+
 style.use('ggplot')
 params = [0.5, 1, 2, 3]
 x = np.linspace(0, 1, 100)

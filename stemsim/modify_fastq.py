@@ -2,7 +2,6 @@
 This script aims to modify the fq file according to the summarize information
 """
 
-import numpy as np
 import os
 
 

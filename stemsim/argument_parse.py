@@ -19,7 +19,7 @@ def arg_parsed():
                                      f"AUTHORS: {__author__}\n\n"
                                      f"COMMON COMMANDS\n\n"
                                      f"It depends on Bowtie2, samtools, and CAMISIM \n"
-                                     f"\n========== StemSim Process ================= \n\n"
+                                     f"\n================= StemSim Process ================= \n\n"
                                      f"Model1: Process the output of CAMISIM \n"
                                      f"Model2: Process raw simulated sequencing data \n",
                                      formatter_class=argparse.RawTextHelpFormatter
@@ -37,9 +37,11 @@ def arg_parsed():
     group1 = parser.add_argument_group("Process CAMISIM output", "Process the output of CAMISIM")
     arg = group1.add_argument
     arg('--input_from_camisim', dest="camisim_output", type=str, help="The output directory of CAMISIM")
+    arg('--genome_to_id', dest="genome_to_id", type=str, help="The the absolute path of genome_to_id.tsv file of CAMISIM\n"
+                                                              "Each line are a genome_id and a absolute path of fasta separated by Tab")
 
     # option group "reads"
-    group2 = parser.add_argument_group("Process raw reads", "Combine Relative Abundance Of All Sample")
+    group2 = parser.add_argument_group("Process raw reads", "Process raw reads simulated by other simulators")
     arg = group2.add_argument
     arg('--input_reads', dest="input_reads", type=str, help="Input raw read files from longitudinal samples separated by ':'; "
                                                             "for paired reads from the same sample, they are separated by ','; "

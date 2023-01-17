@@ -3,6 +3,8 @@ import stemsim.mapping as reads_mapping
 import stemsim.reads_info_to_modify as ritm
 import stemsim.modify_fastq as mf
 import os
+import pysam
+from collections import Counter
 
 
 class Subject:
@@ -11,7 +13,8 @@ class Subject:
     last update 11/14/2022
     """
 
-    def __init__(self, model, subject_id, genome_id_list, genome_id_fas_dict, genome_id_read_dict, bowtie2_path, samtools_path, input_type, thread, my_logger):
+    def __init__(self, model, subject_id, genome_id_list, genome_id_fas_dict, genome_id_read_dict, bowtie2_path,
+                 samtools_path, input_type, substitution_model, thread, my_logger):
         self.model = model                                              # "camisim" or "reads"
         self.ID = subject_id
         self.genome_id = genome_id_list                                 # [geno0, geno1, geno2]
@@ -20,10 +23,12 @@ class Subject:
                                           genome_id_fas_dict.items()}   # {"geno0": "/data/genomes/ref1"}
         self.genome_id_read_dict = genome_id_read_dict                  # {"geno0": [[fq0_path], [fq1_path], [fq2_path]]} or unaligned bam
         self.genome_id_aligned_bam_dict = {}                            # {"geno0": [bam0_path, bam1_path, bam2_path]}
+        self.genome_id_base_prop = {}                                   # {"geno0": {"A": 1/4, "G": 1/4, "C": 1/4, "T": 1/4}}
         self.thread = thread
         self.bowtie2_path = bowtie2_path
         self.samtools_path = samtools_path
         self.input_type = input_type                                    # "fq" or "bam"
+        self.substitution_model = substitution_model    # must be JC69, K80, HKY85, TN93, or REV
         self.logger = my_logger
 
     def check_bowtie_ref(self):
@@ -35,6 +40,33 @@ class Subject:
                 build_bowtie_ref = f"{self.bowtie2_path}-build {fas_path} {fas_prefix}"
                 os.system(build_bowtie_ref)
                 self.logger.info(build_bowtie_ref)
+
+    def calculate_ref_base_prop(self):
+        """
+        :return: the dict of base proportion, like geno_id: {"A": 1/4, "G": 1/4, "C": 1/4, "T": 1/4}
+        """
+        base_frequency_dict = {}
+        for genome_id in self.genome_id:
+            self.logger.info(f"Calculate substitution frequency for reference of {genome_id} ... ...")
+            base_count_dict = {"A": 0, "C": 0, "G": 0, "T": 0}
+            pysam_ref = pysam.FastaFile(self.genome_id_fas_dict[genome_id])
+            seq1 = pysam_ref.fetch(reference=pysam_ref.references[0])
+            base_count_original = Counter(seq1)
+            for base in ["A", "C", "G", "T"]:
+                if base in base_count_original:
+                    base_count_dict[base] += base_count_original[base]
+                if base.lower() in base_count_original:
+                    base_count_dict[base] += base_count_original[base.lower()]
+
+            self.logger.info(f"The number of four bases in genome {genome_id} is {base_count_dict}")
+            four_bases_total_count = sum(list(base_count_dict.values()))    # total number of A G C T, excluding N
+            if four_bases_total_count == 0:
+                # no A, G, C, T is found
+                base_frequency_dict.update({genome_id: None})
+            else:
+                # calculate frequency of four bases excluding N
+                base_frequency_dict.update({genome_id: {i: base_count_dict[i]/four_bases_total_count for i in ["A", "C", "G", "T"]}})
+        self.genome_id_base_prop = base_frequency_dict
 
     def align_simulated_reads(self):
         """
@@ -58,15 +90,15 @@ class Subject:
             # store the path of aligned bam
             self.genome_id_aligned_bam_dict.update({genome_id: aligned_bam_path_list})
 
-    def generate_mutations(self, ref_base_prop_vec, mutation_traj_combination_dict, mutation_number,
-                           base_mutation_freq_dict, output_dir):
+    def generate_mutations(self, mutation_traj_combination_dict, mutation_number, substitution_model,
+                           original_q_matrix, output_dir):
         """
         Step2: Generate reads info that needs to be modified
-        :param ref_base_prop_vec:
-        @ like [1/6, 2/6, 1/6, 2/6], in the order of "A", "G", "C", "T"
+        @ like [1/6, 2/6, 1/6, 2/6], in the order of "A", "C", "G", "T"
         :param mutation_traj_combination_dict: {"combination1": {"prob": 0.3, "longitudinal_prop": [0.1, 0.7, 0.8]}}
         :param mutation_number: total number of mutation to generate
-        :param base_mutation_freq_dict: {"A": {"alt_base_list": ["G", "C", "T"], "alt_freq_list": [0.25, 0.5, 0.25]}, ...}
+        :param substitution_model: JC69, K80, HKY85, TN93, or REV
+        :param original_q_matrix: {"A": {"alt_base_list": ["C", "G", "T"], "alt_freq_list": [0.25, 0.5, 0.25]}, ...}
         :return:
         """
         for genome_id in self.genome_id:
@@ -74,6 +106,23 @@ class Subject:
             input_bam_list = self.genome_id_aligned_bam_dict[genome_id]
             ref_fas_path = self.genome_id_fas_dict[genome_id]
             # record all created mutations, {"read_name1": {distance_to_end1: mutation_base}}, distance is 0-based
+
+            ###########################
+            # get four bases mutation #
+            ###########################
+            # according to give parameters and proportion of four types of bases
+            if self.genome_id_base_prop[genome_id]:
+                # proportion of four bases exists
+                ref_base_prop_dict = self.genome_id_base_prop[genome_id]    # {"A": 1/4}
+                if substitution_model == "JC69" or substitution_model == "K80":
+                    # in the order of "A", "C", "G", "T"
+                    ref_base_prop_vec = [0.25, 0.25, 0.25, 0.25]
+                else:
+                    ref_base_prop_vec = [ref_base_prop_dict[i] for i in ["A", "C", "G", "T"]]
+
+            else:
+                self.logger.info(f"Warning! A, G, C, T are not contained in the genome of {genome_id}, skip this.")
+                continue
             #####################################
             """ mutation information in reads """
             #####################################
@@ -83,9 +132,10 @@ class Subject:
                                                                                        ref_base_prop_vec,
                                                                                        mutation_traj_combination_dict,
                                                                                        mutation_number,
-                                                                                       base_mutation_freq_dict,
+                                                                                       original_q_matrix,
                                                                                        depth_threshold=5,
                                                                                        bin_len=10000)
+
             """
             Output true mutations
             """

@@ -53,13 +53,14 @@ def summarize_reads_to_modify(input_bam_list, ref_fas_path, ref_base_prop_vec, m
     :param input_bam_list: list of abs path of bam
     :param ref_fas_path:
     :param ref_base_prop_vec: the proportion of four bases in mutations
-    @ like [1/6, 2/6, 1/6, 2/6], in the order of "A", "G", "C", "T"
+    @ like [1/6, 2/6, 1/6, 2/6], in the order of "A", "C", "G", "T"
 
     :param mutation_prop_combination_dict: {"combination1": {"prob": 0.3, "longitudinal_prop": [0.1, 0.7, 0.8]}}
     @ the scenario of longitudinal proportion is sampled from mutation_prop_combination_dict
     @ there are many combination generated according to some distribution or given by user
 
     :param mutation_number: total number of short-term mutations
+    :param substitution_model: JC69, K80, HKY85, TN93, REV
     :param base_mutation_freq_dict: {"A": {"alt_base_list": ["G", "C", "T"], "alt_freq_list": [0.25, 0.5, 0.25]}, ...}
     :param depth_threshold:
     :param bin_len:
@@ -112,11 +113,11 @@ def summarize_reads_to_modify(input_bam_list, ref_fas_path, ref_base_prop_vec, m
 
         """ Assign mutations of each type to passed positions """
         # ## get the pos need to be modified and corresponding original genotype ###
-        # ref_base_prop_vec = [1/6, 2/6, 1/6, 2/6], mutation_number=60  in the order of "A", "G", "C", "T"
+        # ref_base_prop_vec = [1/6, 2/6, 1/6, 2/6], mutation_number=60  in the order of "A", "C", "G", "T"
         # get a vector of number of 4 bases, array([10, 19,  9, 22])
         base_count_AGCT = np.random.multinomial(n=mutations_each_bin_array[bin_index], pvals=ref_base_prop_vec)
         all_chosen_index_base_dict = {}     # {1: "A", 17: "G"}
-        for base_i, base_i_count in zip(["A", "G", "C", "T"], base_count_AGCT):
+        for base_i, base_i_count in zip(["A", "C", "G", "T"], base_count_AGCT):
             """ randomly assign base i to passed pos """
             # base_i = "A"
             base_i_index = pos_index_passed[ref_bases_passed_array == base_i]   # index of pos in the bin
