@@ -10,7 +10,7 @@ This code was used for the paper "STEMSIM: a simulator of short-term evolutionar
 http://bowtie-bio.sourceforge.net/bowtie2/index.shtml
 2.  samtools (tested with 1.9)  
 http://www.htslib.org/doc/
-3.  CAMISIM (tested with 1.3, optional, only required for "camisim" mode)
+3.  CAMISIM (tested with 1.3, optional, only required for "camisim" mode)  
 https://github.com/CAMI-challenge/CAMISIM
 4.  This code was written and tested on python 3.6.5, and requires the following packages:
     - numpy (tested with 1.19.5)
@@ -27,7 +27,7 @@ https://github.com/CAMI-challenge/CAMISIM
 
 ## Usage
 
-There are two models for mutation generation in longitudinal metagenomic data using STEMSim.
+There are following steps for analysis of longitudinal metagenomic data using LongStrain.
 
 ### Mode1: camisim
 Under this mode, stemsim takes the output directory of CAMISIM as input directory, and generate longitudinal mutations on the simulated raw sequencing data.   
@@ -37,8 +37,9 @@ Under this mode, stemsim takes the output directory of CAMISIM as input director
 * ```-f PATH/config.txt``` is the absolute path to config file (the template is provided in config.txt);
 * ```-s test_subject1``` is the ID of current subject;
 * ```--input_from_camisim PATH_to_output_directory_of_CAMISIM/``` is the path to the output of CAMISIM;
+* ```--genome_to_id PATH_to_genome_to_id/genome_to_id.tsv``` is the absolute path of genome_to_id.tsv file of CAMISIM, each line are a genome_id and a absolute path of fasta separated by Tab;
 * ```-o PATH_to_output_directory_of_STEMSim/``` is the output directory of STEMSim;
-* ```-l Path/stemsim_test1_log``` is the absolute of log file.
+* ```-l Path/stemsim_test1_log``` is the absolute path of log file.
 
 ### Mode2: simulated raw reads
 Under this mode, stemsim takes the simulated raw reads from other software (such as ART) as input, and generate longitudinal mutations on the simulated raw sequencing data.  
