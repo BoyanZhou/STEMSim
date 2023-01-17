@@ -46,7 +46,6 @@ By:     Boyan Zhou
 
 """
 
-
 import numpy as np
 import stemsim
 import logging
@@ -54,21 +53,19 @@ import time
 import sys
 import os
 import re
-from fractions import Fraction
-import json
+import random
 
 
 def parse_config(config_path):
-    # config_path = "C:/Users/ZHOUB03/OneDrive - NYU Langone Health/research/benchmarking_strain_20211109/code/evolution_simulator/config.txt"
     all_parameter_dict = {}
 
     # get all lines of the config file
     with open(config_path, "r") as config_f:
         config_content = config_f.readlines()
 
-    proportion_of_original_bases = False
-    substitution_matrix_q = False
-    base_type_proportion_dict = {}
+    substitution_model_start = False
+    # substitution_matrix_q = False
+    # base_type_proportion_dict = {}
     base_mutation_freq_dict = {}
     allele_trajectory_dict = {}
     use_manually_fixed_trajectory = False
@@ -77,10 +74,11 @@ def parse_config(config_path):
 
     for line_index, line in enumerate(config_content):
         if line.startswith("#"):
-            proportion_of_original_bases = False
-            substitution_matrix_q = False
+            # proportion_of_original_bases = False
+            # substitution_matrix_q = False
             fixed_trajectory_start = False
             trajectory_beta_start = False
+            substitution_model_start = False
             continue
         """
         if line.startswith("Subject_ID"):
@@ -115,36 +113,53 @@ def parse_config(config_path):
             all_parameter_dict.update({"Mutation_rate": float(line.split("=")[1].strip())})     # like 5e-05
             continue
 
-        if line.startswith("Proportion_of_original_bases"):
-            proportion_of_original_bases = True
+        if line.startswith("Substitution_model"):
+            substitution_model = line.split("=")[1].strip()
+            all_parameter_dict.update({"Substitution_model": substitution_model})
+            substitution_model_start = True
             continue
-        if proportion_of_original_bases:
-            if line.startswith("pA"):
-                base_type_proportion_dict.update({"A": float(Fraction(line.split("=")[1].strip()))})
-            elif line.startswith("pG"):
-                base_type_proportion_dict.update({"G": float(Fraction(line.split("=")[1].strip()))})
-            elif line.startswith("pC"):
-                base_type_proportion_dict.update({"C": float(Fraction(line.split("=")[1].strip()))})
-            elif line.startswith("pT"):
-                base_type_proportion_dict.update({"T": float(Fraction(line.split("=")[1].strip()))})
 
-        if line.startswith("Substitution_matrix_Q"):
-            substitution_matrix_q = True
-            continue
-        if substitution_matrix_q:
-            cols = line.strip().split("\t")
-            if line.startswith("A"):
-                alt_freq_list = [float(Fraction(cols[i])) for i in [2, 3, 4]]
-                base_mutation_freq_dict.update({"A": {"alt_base_list": ["G", "C", "T"], "alt_freq_list": alt_freq_list}})
-            elif line.startswith("G"):
-                alt_freq_list = [float(Fraction(cols[i])) for i in [1, 3, 4]]
-                base_mutation_freq_dict.update({"G": {"alt_base_list": ["A", "C", "T"], "alt_freq_list": alt_freq_list}})
-            elif line.startswith("C"):
-                alt_freq_list = [float(Fraction(cols[i])) for i in [1, 2, 4]]
-                base_mutation_freq_dict.update({"C": {"alt_base_list": ["A", "G", "T"], "alt_freq_list": alt_freq_list}})
-            elif line.startswith("T"):
-                alt_freq_list = [float(Fraction(cols[i])) for i in [1, 2, 3]]
-                base_mutation_freq_dict.update({"T": {"alt_base_list": ["A", "G", "C"], "alt_freq_list": alt_freq_list}})
+        if substitution_model_start:
+            if line.startswith(all_parameter_dict["Substitution_model"]):
+                if all_parameter_dict["Substitution_model"] == "JC69":
+                    base_mutation_freq_dict.update({"A": {"alt_base_list": ["C", "G", "T"],
+                                                          "alt_freq_list": [1/3, 1/3, 1/3]},
+                                                    "C": {"alt_base_list": ["A", "G", "T"],
+                                                          "alt_freq_list": [1/3, 1/3, 1/3]},
+                                                    "G": {"alt_base_list": ["A", "C", "T"],
+                                                          "alt_freq_list": [1/3, 1/3, 1/3]},
+                                                    "T": {"alt_base_list": ["A", "C", "G"],
+                                                          "alt_freq_list": [1/3, 1/3, 1/3]}})
+
+                elif all_parameter_dict["Substitution_model"] == "K80" or \
+                        all_parameter_dict["Substitution_model"] == "HKY85":
+                    alpha = float(line.split("=")[-1].strip().split("\"")[1])
+                    base_mutation_freq_dict.update({"A": {"alt_base_list": ["C", "G", "T"],
+                                                          "alt_freq_list": [alpha, 1.0, alpha]},
+                                                    "C": {"alt_base_list": ["A", "G", "T"],
+                                                          "alt_freq_list": [alpha, alpha, 1.0]},
+                                                    "G": {"alt_base_list": ["A", "C", "T"],
+                                                          "alt_freq_list": [1.0, alpha, alpha]},
+                                                    "T": {"alt_base_list": ["A", "C", "G"],
+                                                          "alt_freq_list": [alpha, 1.0, alpha]}})
+                elif all_parameter_dict["Substitution_model"] == "TN93":
+                    alpha_transversion = float(line.split(",")[1].split("=")[-1].strip().split("\"")[1])
+                    alpha4 = float(line.split(",")[-1].split("=")[-1].strip().split("\"")[1])
+                    base_mutation_freq_dict.update({"A": {"alt_base_list": ["C", "G", "T"], "alt_freq_list": [alpha_transversion, 1.0, alpha_transversion]},
+                                                    "C": {"alt_base_list": ["A", "G", "T"], "alt_freq_list": [alpha_transversion, alpha_transversion, alpha4]},
+                                                    "G": {"alt_base_list": ["A", "C", "T"], "alt_freq_list": [1.0, alpha_transversion, alpha_transversion]},
+                                                    "T": {"alt_base_list": ["A", "C", "G"], "alt_freq_list": [alpha_transversion, alpha4, alpha_transversion]}})
+
+                elif all_parameter_dict["Substitution_model"] == "REV":
+                    alpha1, alpha2, alpha3, alpha4, alpha5 = [float(i.split("=")[-1].strip().split("\"")[1]) for i in line.split(",")]
+                    base_mutation_freq_dict.update({"A": {"alt_base_list": ["C", "G", "T"], "alt_freq_list": [alpha1, 1.0, alpha2]},
+                                                    "C": {"alt_base_list": ["A", "G", "T"], "alt_freq_list": [alpha1, alpha3, alpha4]},
+                                                    "G": {"alt_base_list": ["A", "C", "T"], "alt_freq_list": [1.0, alpha3, alpha5]},
+                                                    "T": {"alt_base_list": ["A", "C", "G"], "alt_freq_list": [alpha2, alpha4, alpha5]}})
+                # normalize the sum of proportion to 1
+                for base in list(base_mutation_freq_dict.keys()):
+                    alt_freq_list_temp = base_mutation_freq_dict[base]["alt_freq_list"]
+                    base_mutation_freq_dict[base]["alt_freq_list"] = [i/sum(alt_freq_list_temp) for i in alt_freq_list_temp]
 
         if line.startswith("Use_manually_fixed_trajectory"):
             if line.split("=")[1].strip() == "True":
@@ -160,7 +175,8 @@ def parse_config(config_path):
         if fixed_trajectory_start:
             cols = line.strip().split("\t")
             if len(cols) == 3:
-                allele_trajectory_dict.update({cols[0]: {"prob": float(cols[1]), "longitudinal_prop": [float(i) for i in cols[2].split(",")]}})
+                allele_trajectory_dict.update(
+                    {cols[0]: {"prob": float(cols[1]), "longitudinal_prop": [float(i) for i in cols[2].split(",")]}})
             continue
 
         #########################################
@@ -173,16 +189,19 @@ def parse_config(config_path):
         if trajectory_beta_start:
             cols = line.strip().split("\t")
             if len(cols) == 5:
-                allele_frequency_list = np.random.beta(float(cols[2]), float(cols[3]), all_parameter_dict["N_longitudinal_samples"])
+                allele_frequency_list = np.random.beta(float(cols[2]), float(cols[3]),
+                                                       all_parameter_dict["N_longitudinal_samples"])
                 if cols[4] == "increase":
                     allele_frequency_list = sorted(allele_frequency_list)
                 elif cols[4] == "decrease":
                     allele_frequency_list = sorted(allele_frequency_list, reverse=True)
-                allele_trajectory_dict.update({cols[0]: {"prob": float(cols[1]), "longitudinal_prop": allele_frequency_list}})
+                allele_trajectory_dict.update({cols[0]: {"prob": float(cols[1]),
+                                                         "longitudinal_prop": allele_frequency_list}})
 
-    all_parameter_dict.update({"Proportion_of_original_bases": [base_type_proportion_dict[i] for i in ["A", "G", "C", "T"]]})
-    all_parameter_dict.update({"Matrix_Q": base_mutation_freq_dict})        # {"A": {"alt_base_list": ["G", "C", "T"], "alt_freq_list": [0.25, 0.5, 0.25]}, ...}
-    all_parameter_dict.update({"Trajectory": allele_trajectory_dict})       # {"combination1": {"prob": 0.3, "longitudinal_prop": [0.1, 0.7, 0.8]}}
+    # {"A": {"alt_base_list": ["G", "C", "T"], "alt_freq_list": [0.25, 0.5, 0.25]}, ...}
+    all_parameter_dict.update({"Matrix_Q": base_mutation_freq_dict})
+    # {"combination1": {"prob": 0.3, "longitudinal_prop": [0.1, 0.7, 0.8]}}
+    all_parameter_dict.update({"Trajectory": allele_trajectory_dict})
     return all_parameter_dict
 
 
@@ -213,6 +232,7 @@ def main():
     my_logger.info("Started with the command: " + " ".join(sys.argv) + "\n")
 
     parameters_dict = parse_config(options.config_file)
+    random.seed(parameters_dict["Random_seed"])
     # *********************************
     # model1: CAMISIM output as input *
     # *********************************
@@ -225,11 +245,12 @@ def main():
         camisim_all_subdir = [i for i in camisim_all_files if os.path.isdir(os.path.join(options.output_dir, i))]
         camisim_sample_dir_pattern = re.compile(".+_sample_")
         # like 2022.11.01_16.55.37_sample_0
-        camisim_sample_dirs = sorted([i for i in camisim_all_subdir if re.search(camisim_sample_dir_pattern, i, flags=0)])
+        camisim_sample_dirs = sorted([i for i in camisim_all_subdir if
+                                      re.search(camisim_sample_dir_pattern, i, flags=0)])
 
         # ## get genome_id_fas_dict ###
-        genome_to_id_path = os.path.join(options.output_dir, "genome_to_id.tsv")
-        genome_id_fas_dict = get_genome_id_fas_dict(genome_to_id_path)
+        # genome_to_id_path = os.path.join(options.output_dir, "genome_to_id.tsv")
+        genome_id_fas_dict = get_genome_id_fas_dict(options.genome_to_id)
         genome_id_list = sorted(list(genome_id_fas_dict.keys()))
 
         # ## getgenome_id_read_dict ###
@@ -250,13 +271,15 @@ def main():
                                                                            parameters_dict["Bowtie2_path"],
                                                                            parameters_dict["Samtools_path"],
                                                                            input_type,
+                                                                           parameters_dict["Substitution_model"],
                                                                            parameters_dict["threads"], my_logger)
 
         subject_microbial_community.check_bowtie_ref()
         subject_microbial_community.align_simulated_reads()
-        subject_microbial_community.generate_mutations(parameters_dict["Proportion_of_original_bases"],
-                                                       parameters_dict["Trajectory"],
+        subject_microbial_community.calculate_ref_base_prop()
+        subject_microbial_community.generate_mutations(parameters_dict["Trajectory"],
                                                        parameters_dict["Total_mutations"],
+                                                       parameters_dict["Substitution_model"],
                                                        parameters_dict["Matrix_Q"],
                                                        options.output_dir)
 
@@ -277,18 +300,21 @@ def main():
                                                                            parameters_dict["Bowtie2_path"],
                                                                            parameters_dict["Samtools_path"],
                                                                            input_type,
+                                                                           parameters_dict["Substitution_model"],
                                                                            parameters_dict["threads"], my_logger)
 
         subject_microbial_community.check_bowtie_ref()
         subject_microbial_community.align_simulated_reads()
-        subject_microbial_community.generate_mutations(parameters_dict["Proportion_of_original_bases"],
-                                                       parameters_dict["Trajectory"],
+        subject_microbial_community.calculate_ref_base_prop()
+        subject_microbial_community.generate_mutations(parameters_dict["Trajectory"],
                                                        parameters_dict["Total_mutations"],
+                                                       parameters_dict["Substitution_model"],
                                                        parameters_dict["Matrix_Q"],
                                                        options.output_dir)
+
+    end_time = time.time()
+    my_logger.info(f"It totally took {end_time-start_time}s. End of this job.")
 
 
 if __name__ == "__main__":
     sys.exit(main())
-
-
