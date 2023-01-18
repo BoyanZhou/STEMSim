@@ -1,31 +1,31 @@
-# path to samtools and Bowtie2
+# 1. path to samtools and Bowtie2
 # add them to the environment, or provide the absolute path to them 
 # if it has been added to the environment, do not need to change these two parameters
 Samtools_path=samtools
 Bowtie2_path=bowtie2
 
-# number of longitudinal samples
+# 2. number of longitudinal samples
 N_longitudinal_samples=4
 
-# maximum number of threads for bowtie2
+# 3. maximum number of threads for bowtie2
 threads=4
 
-# random seed
+# 4. random seed
 Random_seed=123456
 
-# Total number of short-term mutations
+# 5. Total number of short-term mutations
 Total_mutations=100
 
-# Whether using mutation rate instead of a fixed total number of mutations (Must be False or True)
+# 6. Whether using mutation rate instead of a fixed total number of mutations (Must be False or True)
 # If want to generate fixed number of mutation, set it to False;
 # If want to generate mutations according to the length of genome and mutation rate, set it to True
 Use_mutation_rate=False
 
-# Mutation rate across the genome, usually around 5e-5
+# 7. Mutation rate across the genome, usually around 5e-5
 # Only works when use_mutation_rate=True; this paramter is disabled by default
 Mutation_rate=5e-5
 
-# Substitution rate matrix Q, separated by Tab
+# 8. Substitution rate matrix Q, separated by Tab
 # Reference Website: http://www.bioinf.man.ac.uk/resources/phase/manual/node65.html
 # rate of change from allele i (columns) to allele j (rows)
 # Substitution model: must choose from JC69, K80, HKY85, TN93, REV
@@ -35,7 +35,7 @@ Mutation_rate=5e-5
 # TN93: The TN93 model has four frequencies parameters. It accounts for the difference between transitions and transversions and differentiates the two kinds of transitions (purine-purine & pyrimidine-pyrimidine).
 # REV: The REV model is the most general model for nucleotide substitution subject to the time-reversibility constraint. It has four frequencies and five rate parameters.
 
-# Model paramters (modify the parameters below enclosed in quotation mark "")
+# 9. Model paramters (modify the parameters below enclosed in quotation mark "")
 
 Substitution_model=HKY85
 
@@ -51,11 +51,11 @@ C	alpha1*pA	-		alpha3*pG	alpha4*pT
 G	pA		alpha3*pC	-		alpha5*pT
 T	alpha2*pA	alpha4*pC	alpha5*pG	-
 
-# Whether use manually fixed, default is False
+# 10. Whether use manually fixed, default is False
 # If set to True, will use the distribution generated from beta distribution
 Use_manually_fixed_trajectory=False
 
-# Manually fixed longitudinal patterns of mutations
+# 11. Manually fixed longitudinal patterns of mutations
 # pattern_name:proportion_in_all_patterns:longitudinal_proportions_of_mutations(separated by ",")
 # The second col is the proportion of that trajectory in all generated mutations
 Manually_fixed_trajectory
@@ -64,7 +64,7 @@ trajectory2	0.2	1,0.5,0.2,0
 trajectory3	0.3	0.2,0.3,0.2,0.3
 trajectory4	0.4	0.7,0.6,0.7,0.8
 
-# Generate longitudinal trajectory of mutations from beta distribution
+# 12. Generate longitudinal trajectory of mutations from beta distribution
 # The parameters (alpha and beta) of beta distritution can be changed
 # pattern_name:	proportion_in_all_patterns:	alpha:	beta:	increase (or decrease or random)
 Trajectory_from_beta_distribution
