@@ -31,7 +31,7 @@ There are following steps for analysis of longitudinal metagenomic data using Lo
 
 ### Mode1: camisim
 Under this mode, stemsim takes the output directory of CAMISIM as input directory, and generate longitudinal mutations on the simulated raw sequencing data.   
-```python /path_to_stemsim_directory/stemsim.py -m camisim -f PATH/config.txt -s test_subject1 --input_from_camisim PATH_to_output_directory_of_CAMISIM/ -o PATH_to_output_directory_of_STEMSim/ -l Path/stemsim_test1_log```
+```python /path_to_stemsim_directory/stemsim.py -m camisim -f PATH/config.txt -s test_subject1 --input_from_camisim PATH_to_output_directory_of_CAMISIM/ --genome_to_id PATH_to_genome_to_id/genome_to_id.tsv -o PATH_to_output_directory_of_STEMSim/ -l Path/stemsim_test1_log```
 
 * ```-m camisim``` is the working mode for processing CAMISIM output;
 * ```-f PATH/config.txt``` is the absolute path to config file (the template is provided in config.txt);
@@ -57,7 +57,7 @@ Under this mode, stemsim takes the simulated raw reads from other software (such
 ### Config file: the template is provided in config.txt
 The tutorial of parameter setting can be found https://github.com/BoyanZhou/STEMSim/wiki
 
-**Warnning:** STEMSim is designed to work on longitudinal or concurrent simulated raw sequencing reads of microbial communities. Although it can also works on real metagenomic data, it only works well on species with high depth and well-characterized genomes.
+**Warning:** STEMSim is designed to work on longitudinal or concurrent simulated raw sequencing reads of microbial communities. Although it can also works on real metagenomic data, it only works well on species with high depth and well-characterized genomes.
 
 
 **Please contact boyanzhou1992@gmail.com for any questions or bug reporting.**
