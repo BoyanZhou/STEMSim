@@ -27,7 +27,7 @@ https://github.com/CAMI-challenge/CAMISIM
 
 ## Usage
 
-There are following steps for analysis of longitudinal metagenomic data using LongStrain.
+There are two models (camisim and reads) for the usage of STEMSim. The "camisim" model is designed for the simulated microbial communities by CAMISIM. The "reads" model is designed for the simulated raw reads from one reference genome. STEMSim usually deals with longitudinal samples.  
 
 ### Mode1: camisim
 Under this mode, stemsim takes the output directory of CAMISIM as input directory, and generate longitudinal mutations on the simulated raw sequencing data.   
