@@ -242,22 +242,26 @@ def main():
 
         # ## get longitudinal sample directories ###
         # camisim_all_subdir = ["2022.11.01_16.52.10_sample_0", "2022.11.01_16.52.10_sample_1", "distributions"]
-        camisim_all_subdir = [i for i in camisim_all_files if os.path.isdir(os.path.join(options.output_dir, i))]
+        camisim_all_subdir = [i for i in camisim_all_files if os.path.isdir(os.path.join(options.camisim_output, i))]
         camisim_sample_dir_pattern = re.compile(".+_sample_")
         # like 2022.11.01_16.55.37_sample_0
         camisim_sample_dirs = sorted([i for i in camisim_all_subdir if
                                       re.search(camisim_sample_dir_pattern, i, flags=0)])
+        if len(camisim_sample_dirs) == 0:
+            print(f"No sample directory is found under the output directory of camisim {options.camisim_output}")
 
         # ## get genome_id_fas_dict ###
         # genome_to_id_path = os.path.join(options.output_dir, "genome_to_id.tsv")
         genome_id_fas_dict = get_genome_id_fas_dict(options.genome_to_id)
+        # print(f"The genome id and reference fas are {genome_id_fas_dict}")
         genome_id_list = sorted(list(genome_id_fas_dict.keys()))
 
         # ## getgenome_id_read_dict ###
         # for CAMISIM we use unaligned bam, {"geno0": [bam0_path, bam1_path, bam2_path]}
         genome_id_read_dict = {i: [] for i in genome_id_list}
         for camisim_sample_dir in camisim_sample_dirs:
-            unaligned_bam_dir = os.path.join(options.output_dir, camisim_sample_dir, "bam")
+
+            unaligned_bam_dir = os.path.join(options.camisim_output, camisim_sample_dir, "bam")
             for genome_id in genome_id_list:
                 genome_id_read_dict[genome_id].append([os.path.join(unaligned_bam_dir, f"{genome_id}.bam")])
         print(genome_id_read_dict)
@@ -281,7 +285,7 @@ def main():
                                                        parameters_dict["Total_mutations"],
                                                        parameters_dict["Substitution_model"],
                                                        parameters_dict["Matrix_Q"],
-                                                       options.output_dir)
+                                                       options.output_dir, options.model)
 
     # ********************************************
     # model2: other simulated raw reads as input *
@@ -310,7 +314,7 @@ def main():
                                                        parameters_dict["Total_mutations"],
                                                        parameters_dict["Substitution_model"],
                                                        parameters_dict["Matrix_Q"],
-                                                       options.output_dir)
+                                                       options.output_dir, options.model)
 
     end_time = time.time()
     my_logger.info(f"It totally took {end_time-start_time}s. End of this job.")
