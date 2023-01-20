@@ -91,7 +91,7 @@ class Subject:
             self.genome_id_aligned_bam_dict.update({genome_id: aligned_bam_path_list})
 
     def generate_mutations(self, mutation_traj_combination_dict, mutation_number, substitution_model,
-                           original_q_matrix, output_dir):
+                           original_q_matrix, output_dir, working_model, pool_reads=True):
         """
         Step2: Generate reads info that needs to be modified
         @ like [1/6, 2/6, 1/6, 2/6], in the order of "A", "C", "G", "T"
@@ -99,8 +99,11 @@ class Subject:
         :param mutation_number: total number of mutation to generate
         :param substitution_model: JC69, K80, HKY85, TN93, or REV
         :param original_q_matrix: {"A": {"alt_base_list": ["C", "G", "T"], "alt_freq_list": [0.25, 0.5, 0.25]}, ...}
+        :param working_model: camisim or reads
+        :param pool_reads: whether combine the generated fq.gz
         :return:
         """
+        genome_id_modified_fq_dict = {}     # {"geno_id1": [, , ,]}
         for genome_id in self.genome_id:
             self.logger.info(f"Generate mutations for reads from {genome_id} ... ...")
             input_bam_list = self.genome_id_aligned_bam_dict[genome_id]
@@ -144,6 +147,7 @@ class Subject:
             ################################
             """ Step3: modified fq files """
             ################################
+            genome_id_modified_fq_dict.update({genome_id: []})      # record the path of modified fqs
             input_fq_path_list = self.genome_id_read_dict[genome_id]    # [[], [], []]
             for fq_index in range(len(input_fq_path_list)):
                 # for each longitudinal sample
@@ -167,14 +171,58 @@ class Subject:
                     output_fq_path = os.path.join(output_dir, f"{self.ID}_{genome_id}_t{fq_index}_mutated.fq")
                     mf.generate_modified_fq(processed_fq_path[0], output_fq_path, reads_mutations_record[fq_index],
                                             whether_gzip=True)
+                    genome_id_modified_fq_dict[genome_id].append([f"{output_fq_path}.gz"])
 
                 elif len(processed_fq_path) == 2:
+                    fq_gz_list_temp = []
                     for fq_i, input_fq_i_path in enumerate(sorted(processed_fq_path)):
                         # fq_i is 0 or 1, represent R1 or R2 in paired fqs
                         output_fq_path = os.path.join(output_dir,
                                                       f"{self.ID}_{self.genome_id}_t{fq_index}_mutated_R{fq_i + 1}.fq")
                         mf.generate_modified_fq(input_fq_i_path, output_fq_path, reads_mutations_record[fq_index],
                                                 whether_gzip=True)
+                        fq_gz_list_temp.append(f"{output_fq_path}.gz")
+                    genome_id_modified_fq_dict[genome_id].append(fq_gz_list_temp)
+        # --------------------------------------------------------------------------------------------------------------
+        # whether pool the modified reads from each genome
+        if pool_reads and working_model == "camisim":
+            print(f"\tgenome_id_modified_fq_dict is {genome_id_modified_fq_dict}\t")
+            fq_gz_list_temp2 = list(genome_id_modified_fq_dict.values())[0]     # [[t0_fq], [t1_fq], [t2_fq]]
+            if len(fq_gz_list_temp2[0]) == 1:
+                ########################################################
+                """ check the first sample, whether single end reads """
+                ########################################################
+                longitudinal_sample_lists = [[] for i in range(len(fq_gz_list_temp2))]  # genome ids at all time point
+                for fq_gz_list_temp3 in list(genome_id_modified_fq_dict.values()):
+                    for sample_index, fq_gz in enumerate(fq_gz_list_temp3):
+                        longitudinal_sample_lists[sample_index].append(fq_gz[0])
+
+                # pool reads from all genome ids, each element is all genome_id at a time point
+                for sample_index, fq_from_genome_ids in enumerate(longitudinal_sample_lists):
+                    pooled_fq = os.path.join(output_dir, f"{self.ID}_all_pooled_t{sample_index}_mutated.fq.gz")
+                    os.system(f"cat {' '.join(fq_from_genome_ids)} > {pooled_fq}")
+
+            elif len(fq_gz_list_temp2[0]) == 2:
+                ##############################
+                """ whether pair end reads """
+                ##############################
+                longitudinal_sample_r1_lists = [[] for i in range(len(fq_gz_list_temp2))]
+                longitudinal_sample_r2_lists = [[] for i in range(len(fq_gz_list_temp2))]
+                for fq_gz_list_temp3 in list(genome_id_modified_fq_dict.values()):
+                    for sample_index, fq_gz in enumerate(fq_gz_list_temp3):
+                        longitudinal_sample_r1_lists[sample_index].append(fq_gz[0])
+                        longitudinal_sample_r2_lists[sample_index].append(fq_gz[1])
+
+                # pool reads from all genome ids, each element is all genome_id at a time point
+                for sample_index, fq_from_genome_ids in enumerate(longitudinal_sample_r1_lists):
+                    pooled_fq_r1 = os.path.join(output_dir, f"{self.ID}_all_pooled_t{sample_index}_mutated_R1.fq.gz")
+                    os.system(f"cat {' '.join(fq_from_genome_ids)} > {pooled_fq_r1}")
+                for sample_index, fq_from_genome_ids in enumerate(longitudinal_sample_r2_lists):
+                    pooled_fq_r2 = os.path.join(output_dir, f"{self.ID}_all_pooled_t{sample_index}_mutated_R2.fq.gz")
+                    os.system(f"cat {' '.join(fq_from_genome_ids)} > {pooled_fq_r2}")
+
+            else:
+                print(f"Error! The modified reads of {self.ID} are neither single end nor pair end!")
 
     def output_truth_of_mutation(self, mutation_info_dict, output_dir, geno_id):
         """

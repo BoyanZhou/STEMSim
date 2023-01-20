@@ -99,6 +99,9 @@ def summarize_reads_to_modify(input_bam_list, ref_fas_path, ref_base_prop_vec, m
         """ Get the coverage at each pos in the bin for each BAM """
         bin_boundary = bin_boundary_list[bin_index]     # [0, 10000]
         bams_bin_depth_array = get_depth_in_bin(pysam_ref.references[0], bin_boundary[0], bin_boundary[1], pysam_bam_list)
+        if len(bams_bin_depth_array) == 0:
+            # means no coverage in this block
+            continue
         bams_bin_depth_sum_array = np.sum(bams_bin_depth_array, axis=1)     # len of end-start
 
         # --------------------------------------------------------------------------------------------------------------
