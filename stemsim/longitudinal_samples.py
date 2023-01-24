@@ -178,7 +178,7 @@ class Subject:
                     for fq_i, input_fq_i_path in enumerate(sorted(processed_fq_path)):
                         # fq_i is 0 or 1, represent R1 or R2 in paired fqs
                         output_fq_path = os.path.join(output_dir,
-                                                      f"{self.ID}_{self.genome_id}_t{fq_index}_mutated_R{fq_i + 1}.fq")
+                                                      f"{self.ID}_{genome_id}_t{fq_index}_mutated_R{fq_i + 1}.fq")
                         mf.generate_modified_fq(input_fq_i_path, output_fq_path, reads_mutations_record[fq_index],
                                                 whether_gzip=True)
                         fq_gz_list_temp.append(f"{output_fq_path}.gz")

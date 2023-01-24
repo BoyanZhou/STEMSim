@@ -42,7 +42,20 @@ def map_simulated_reads(unaligned_reads_abs_path_list, bowtie_reference, thread,
     # paired end input #
     ####################
     elif len(unaligned_reads_abs_path_list) == 2:
-        pass
+        bowtie2_map_command = ""
+        if input_type == "fq":
+            bowtie2_map_command = f"{bowtie2_path} -p {thread} -x {bowtie_reference} -1 {unaligned_reads_abs_path_list[0]} -2 {unaligned_reads_abs_path_list[1]} -S {abs_path_prefix}_aligned.sam"
+
+        elif input_type == "bam":
+            samtools_bam_to_fq_r1 = f"{samtools_path} bam2fq {unaligned_reads_abs_path_list[0]} > {abs_path_prefix}_bam_R1.fq"
+            samtools_bam_to_fq_r2 = f"{samtools_path} bam2fq {unaligned_reads_abs_path_list[1]} > {abs_path_prefix}_bam_R2.fq"
+            bowtie2_map_command = f"{bowtie2_path} -p {thread} -x {bowtie_reference} -1 {abs_path_prefix}_bam_R1.fq -2 {abs_path_prefix}_bam_R2.fq -S {abs_path_prefix}_aligned.sam"
+            my_logger.info(samtools_bam_to_fq_r1)
+            my_logger.info(samtools_bam_to_fq_r2)
+            os.system(samtools_bam_to_fq_r1)
+            os.system(samtools_bam_to_fq_r2)
+        my_logger.info(bowtie2_map_command)
+        os.system(bowtie2_map_command)
 
     samtools_view = f"{samtools_path} view -bS {abs_path_prefix}_aligned.sam > {abs_path_prefix}_aligned.bam"
     samtools_sort = f"{samtools_path} sort {abs_path_prefix}_aligned.bam -o {abs_path_prefix}_aligned_sorted.bam"
