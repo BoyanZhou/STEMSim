@@ -39,7 +39,10 @@ Under this mode, stemsim takes the output directory of CAMISIM as input director
 * ```--input_from_camisim PATH_to_output_directory_of_CAMISIM/``` is the path to the output of CAMISIM;
 * ```--genome_to_id PATH_to_genome_to_id/genome_to_id.tsv``` is the absolute path of genome_to_id.tsv file of CAMISIM, each line are a genome_id and a absolute path of fasta separated by Tab (see example below);
 * ```-o PATH_to_output_directory_of_STEMSim/``` is the output directory of STEMSim;
-* ```-l Path/stemsim_test1_log``` is the absolute path of log file.
+* ```-l Path/stemsim_test1_log``` is the absolute path of log file;
+* ```--nonmutated_list Path/nonmutated_region_file_list.txt``` is the absolute path of file, in which each line stores the genome ID and its corresponding genomic-region file (the genome ID and genomic-region file are separated by Tab). Three formats (.gtf, .gff, and .bed) of genomic-region file are acceptable. For each genome listed, no mutation will be generated in the genomic regions listed in the genomic-region file;
+* ```-p Path/directory_of_snpeff``` is the absolute path of the directory of snpEff (optional), where snpEff.jar is stored;
+* ```-a Path/genomeID_match_snpEff_ID.txt``` is the absolute path of ID-matching table, in which each line contains a genome ID and its matching ID in snpEff database.
 
 #### example of genome_to_id.tsv
 ```
@@ -59,7 +62,7 @@ Under this mode, stemsim takes the simulated raw reads from other software (such
 * ```--reference_genome PATH/species0_strain0.fas``` is the absolute path of reference genome (.fas) from which raw reads are simulated;
 * ```--genome_id species0_strain0``` is the genome id of reference genome;
 * ```-l Path/stemsim_test1_log``` is the absolute of log file.
-
+* ```--nonmutated_file Path/non_mutation_region.gtf``` is the absolute of genomic-region file (.gtf or .gff or .bed), in which no mutation will be generated for this genome.
 
 ### Config file: the template is provided in config.txt
 The tutorial of parameter setting can be found https://github.com/BoyanZhou/STEMSim/wiki
