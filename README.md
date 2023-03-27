@@ -14,7 +14,9 @@ http://www.htslib.org/doc/
 https://github.com/CAMI-challenge/CAMISIM
 4.  ART (tested with art/2016-06-05, optional, generate input for "reads" mode)
 https://www.niehs.nih.gov/research/resources/software/biostatistics/art/index.cfm
-5.  This code was written and tested on python 3.6.5, and requires the following packages:
+5.  SnpEff (tested with 5.1, optional, annotate the vcf output of true mutations)
+http://pcingola.github.io/SnpEff/
+6.  This code was written and tested on python 3.6.5, and requires the following packages:
     - numpy (tested with 1.19.5)
     - pysam (tested with 0.16.0.1)
     
