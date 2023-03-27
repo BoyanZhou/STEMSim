@@ -10,9 +10,11 @@ https://github.com/BoyanZhou/STEMSim/wiki
 http://bowtie-bio.sourceforge.net/bowtie2/index.shtml
 2.  samtools (tested with 1.9)  
 http://www.htslib.org/doc/
-3.  CAMISIM (tested with 1.3, optional, only required for "camisim" mode)  
+3.  CAMISIM (tested with 1.3, optional, generate input for "camisim" mode)  
 https://github.com/CAMI-challenge/CAMISIM
-4.  This code was written and tested on python 3.6.5, and requires the following packages:
+4.  ART (tested with art/2016-06-05, optional, generate input for "reads" mode)
+https://www.niehs.nih.gov/research/resources/software/biostatistics/art/index.cfm
+5.  This code was written and tested on python 3.6.5, and requires the following packages:
     - numpy (tested with 1.19.5)
     - pysam (tested with 0.16.0.1)
     
