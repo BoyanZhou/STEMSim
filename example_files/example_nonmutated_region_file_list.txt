@@ -1,0 +1,4 @@
+# the first column is the genome id which should be consistent with the genome id in genome_to_id.tsv (Mode1: camisim) or --genome_id (Mode2: simulated raw reads)
+# the second column is the genomic-region file (must be .bed or .gtf or .gff), no mutation will be generated in the regions in these files
+Genome1.0	/gpfs/data/lilab/home/zhoub03/long_short_term_evolution/simulation_study/single_species/Bifidobacterium_breve/Bifidobacterium_breve_2strains_simu1/rep1/example_nonmutated_region_in_Bifidobacterium_breve_12L.gtf
+Genome1.1	/gpfs/data/lilab/home/zhoub03/long_short_term_evolution/simulation_study/single_species/Bifidobacterium_breve/Bifidobacterium_breve_2strains_simu1/rep1/example_nonmutated_region_in_Bifidobacterium_breve_ACS-071-V-Sch8b.bed
