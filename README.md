@@ -2,7 +2,7 @@
 ===========================================
 
 This code was used for the paper "STEMSIM: a simulator of short-term evolutionary mutations for longitudinal metagenomic data".  
-Detailed tutorial can be found:  
+**Detailed tutorial can be found:**  
 https://github.com/BoyanZhou/STEMSim/wiki
 
 ## Requirements
@@ -27,7 +27,6 @@ http://pcingola.github.io/SnpEff/
 ## Install
 
 1. Install the required software and packages
-
 2. Download all files and deposit them under a directory.
 
 ## Usage
