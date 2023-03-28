@@ -8,3 +8,4 @@ import stemsim.longitudinal_samples
 import stemsim.mapping
 import stemsim.modify_fastq
 import stemsim.reads_info_to_modify
+import stemsim.indel
