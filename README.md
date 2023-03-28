@@ -1,7 +1,8 @@
 **STEMSim for the simulation of short-term evolutionary mutations**
 ===========================================
 
-This code was used for the paper "STEMSIM: a simulator of short-term evolutionary mutations for longitudinal metagenomic data".
+This code was used for the paper "STEMSIM: a simulator of short-term evolutionary mutations for longitudinal metagenomic data".  
+Detailed tutorial can be found:  
 https://github.com/BoyanZhou/STEMSim/wiki
 
 ## Requirements
