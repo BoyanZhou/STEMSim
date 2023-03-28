@@ -5,7 +5,7 @@ Samtools_path=samtools
 Bowtie2_path=bowtie2
 
 # 2. number of longitudinal samples
-N_longitudinal_samples=4
+N_longitudinal_samples=3
 
 # 3. maximum number of threads for bowtie2
 threads=4
@@ -19,11 +19,11 @@ Total_mutations=100
 # 6. Whether using mutation rate instead of a fixed total number of mutations (Must be False or True)
 # If want to generate fixed number of mutation, set it to False;
 # If want to generate mutations according to the length of genome and mutation rate, set it to True
-Use_mutation_rate=False
+Use_mutation_rate=True
 
 # 7. Mutation rate across the genome, usually around 5e-5
 # Only works when use_mutation_rate=True; this paramter is disabled by default
-Mutation_rate=5e-5
+Mutation_rate=3e-4
 
 # 8. Substitution rate matrix Q, separated by Tab
 # Reference Website: http://www.bioinf.man.ac.uk/resources/phase/manual/node65.html
@@ -72,3 +72,80 @@ trajectory1	0.1	0.5	0.5	random
 trajectory2	0.2	0.5	1.0	increase
 trajectory3	0.3	1.0	0.5	decrease
 trajectory4	0.4	1.0	1.0	random
+
+# 13. Whether generate short insertions (Must be False or True)
+# If you want to generate short insertions, set it to True; otherwise set it to False
+Generate_short_insertion=True
+
+# 13.1 Total number of short-insertions
+Short_insertion_number=10
+
+# 13.2 Whether using mutation rate instead of a fixed total number of mutations (Must be False or True)
+# If want to generate fixed number of short insertions, set it to False;
+# If want to generate short insertions according to the length of genome and mutation rate, set it to True
+Short_insertion_use_mutation_rate=False
+
+# 13.3 Mutation rate across the genome, usually around 5e-6
+# Only works when Short_insertion_use_mutation_rate=True; this paramter is disabled by default
+Short_insertion_mutation_rate=5e-6
+
+# 13.4 Generate the length of short insertion from beta distribution
+# the range of the length of short insertion is from 1 to 10 bp
+# pattern_name:	alpha:	beta:
+Short_insertion_from_beta_distribution
+0.5	3
+
+# 14. Whether generate short deletions (Must be False or True)
+# If you want to generate short deletions, set it to True; otherwise set it to False
+Generate_short_deletion=True
+
+# 14.1 Total number of short-deletions
+Short_deletion_number=10
+
+# 14.2 Whether using mutation rate instead of a fixed total number of mutations (Must be False or True)
+# If want to generate fixed number of short deletions, set it to False;
+# If want to generate short deletions according to the length of genome and mutation rate, set it to True
+Short_deletion_use_mutation_rate=False
+
+# 14.3 Mutation rate across the genome, usually around 5e-6
+# Only works when Short_deletion_use_mutation_rate=True; this paramter is disabled by default
+Short_deletion_mutation_rate=5e-6
+
+# 14.4 Generate the length of short deletion from beta distribution
+# the range of the length of short deletion is from 1 to 10 bp
+# pattern_name:	alpha:	beta:
+Short_deletion_from_beta_distribution
+0.5	3
+
+# 15. Whether generate long insertions (Must be False or True)
+# If you want to generate long insertions, set it to True; otherwise set it to False
+Generate_long_insertion=False
+
+# 15.1 Total number of long insertions
+Long_insertion_number=3
+
+# 15.2 Generate the length of long insertion from normal distribution
+# by default, the mean length of long insertion is from 5000bp, standard deviation is 500bp
+# pattern_name:	mean:	standard deviation:
+Long_insertion_from_normal_distribution
+5000	500
+
+# 16. Whether generate long deletions (Must be False or True)
+# If you want to generate long deletions, set it to True; otherwise set it to False
+Generate_long_deletion=False
+
+# 16.1 Total number of long deletions
+Long_deletion_number=3
+
+# 16.2 Generate the length of long deletion from normal distribution
+# by default, the mean length of long deletion is from 5000bp, standard deviation is 500bp
+# pattern_name:	mean:	standard deviation:
+Long_deletion_from_normal_distribution
+5000	500
+
+
+
+
+
+
+
