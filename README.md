@@ -13,7 +13,7 @@ http://bowtie-bio.sourceforge.net/bowtie2/index.shtml
 http://www.htslib.org/doc/
 3.  CAMISIM (tested with 1.3, optional, generate input for "camisim" mode)  
 https://github.com/CAMI-challenge/CAMISIM
-4.  ART (tested with art/2016-06-05, optional, generate input for "reads" mode)
+4.  ART (tested with art/2016-06-05, optional, generate input for "reads" mode)  
 https://www.niehs.nih.gov/research/resources/software/biostatistics/art/index.cfm
 5.  SnpEff (tested with 5.1, optional, annotate the vcf output of true mutations)  
 http://pcingola.github.io/SnpEff/
