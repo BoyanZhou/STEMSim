@@ -5,6 +5,9 @@ This code was used for the paper "STEMSIM: a simulator of short-term evolutionar
 **Detailed tutorial can be found:**  
 https://github.com/BoyanZhou/STEMSim/wiki
 
+**Workflow of STEMSim** 
+![Figure1](https://github.com/user-attachments/assets/13a83338-7d6f-42e0-b832-b60dedd89f42)
+
 ## Requirements
 
 1.  Bowtie2 (tested with 0.16.0.1)  
