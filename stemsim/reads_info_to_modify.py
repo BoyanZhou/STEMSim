@@ -113,7 +113,7 @@ def summarize_reads_to_modify(input_bam_list, ref_fas_path, ref_base_prop_vec, m
     """
     For each chromosome, then for each bin, summarize all info in all_mutation_info = {}, merge to all_mutation_info_chr
     at last merge to all_mutation_info.
-
+    # 2024/08/12: add 'longitudinal_prop' to all_mutation_info
     :param input_bam_list: list of abs path of bam
     :param ref_fas_path:
     :param ref_base_prop_vec: the proportion of four bases in mutations
@@ -135,7 +135,8 @@ def summarize_reads_to_modify(input_bam_list, ref_fas_path, ref_base_prop_vec, m
     :param space_between_mutations: distance between mutations (including small indels)
     :return: reads_mutations_record, reads_to_remove_record, all_mutation_info
     "type" is insertion or deletion or SNV
-    {chr_name: {{position: {"type": "deletion", "base": [ref_base, mutated_base], "ref_count": [0] * len(input_bam_list), "alt_count": [0] * len(input_bam_list)}}}}
+    {chr_name: {{position: {"type": "deletion", "base": [ref_base, mutated_base], "ref_count": [0] * len(input_bam_list),
+    "alt_count": [0] * len(input_bam_list), 'longitudinal_prop': array([0.45648464, 0.27124586, 0.10524191])}}}}
     """
 
     """ all results recorded """
@@ -293,7 +294,7 @@ def summarize_reads_to_modify(input_bam_list, ref_fas_path, ref_base_prop_vec, m
             # Attention! #
             ##############
             # InDels should not be too close to the end of reads or border of pos_index_passed
-            all_mutation_info_in_bin = {}  # {pos: {"type": "SNV", "base":[ref, alt], "ref_count": [[0] * len(input_bam_list)], "alt_count": [[0] * len(input_bam_list)]}}
+            all_mutation_info_in_bin = {}  # {pos: {"type": "SNV", "base":[ref, alt], "ref_count": [[0] * len(input_bam_list)], "alt_count": [[0] * len(input_bam_list)], 'longitudinal_prop': array([0.45648464, 0.27124586, 0.10524191])}}
             """ 3.1 If deletions exist """
             # ref: GTCT, alt: G;
             deletion_num_this_bin = deletion_each_bin_array[bin_index]
@@ -375,6 +376,9 @@ def summarize_reads_to_modify(input_bam_list, ref_fas_path, ref_base_prop_vec, m
             mutation_prop_of_pos_in_bin_array = np.array(
                     [mutation_prop_combination_dict[i]["longitudinal_prop"] for i in
                      combination_assigned_to_mutation_list])
+            # add mutation_freq at each pos to all_mutation_info_in_bin; {pos: {}}
+            for index_temp, pos_temp in enumerate(sorted(all_mutation_info_in_bin.keys())):
+                all_mutation_info_in_bin[pos_temp].update({'longitudinal_prop': mutation_prop_of_pos_in_bin_array[index_temp]})
 
             """ Record reads info to change for each bam """
             pos_index_in_chr_sorted = sorted(all_mutation_info_in_bin.keys())
@@ -483,7 +487,7 @@ def filter_blocks_by_boundary(input_blocks, min_distance_to_boundary=5):
 
 
 def get_reads_info_to_modify(pysam_bam, pysam_ref, chr_name, start, end,
-                             chosen_index_mutation_freq_dict, mutation_info_in_bin, index_in_bam_list):
+                             chosen_index_mutation_freq_dict, mutation_info_in_bin, index_in_bam_list, whether_ignore_orphan_read=False):
     """
     Given the index (in bin) of pos to be modified, summarize the read names and position in reads need to be changed
     from the pysam_bam input
@@ -497,6 +501,7 @@ def get_reads_info_to_modify(pysam_bam, pysam_ref, chr_name, start, end,
     :param mutation_info_in_bin: {pos: {"type": "SNV", "base":[ref, alt], "ref_count": [0, 0, 0],
     "alt_count": [0, 0, 0]}}, key is the pos in genome
     :param index_in_bam_list: 0, 1, ...
+    :param whether_ignore_orphan_read: whether ignore orphan reads for pileup
     :return: {"read_name1": {"range_list":[[distance_to_end_start, distance_to_end_end]], "alt_list": [mutation_base]}},
     distance is 0-based change the base in region [distance_to_end_start, distance_to_end_end] of read to mutation_base
     there may be multiple range if multiple mutations
@@ -504,7 +509,8 @@ def get_reads_info_to_modify(pysam_bam, pysam_ref, chr_name, start, end,
     """
     read_info_to_change_dict = {}   # {"read_name1": {distance_to_end1: mutation_base}}, distance is 0-based
 
-    bin_pileup = pysam_bam.pileup(chr_name, start, end, truncate=True, stepper="samtools", fastafile=pysam_ref)
+    bin_pileup = pysam_bam.pileup(chr_name, start, end, truncate=True, stepper="samtools", fastafile=pysam_ref,
+                                  ignore_orphans=whether_ignore_orphan_read)
     for pc in bin_pileup:
         # pc_index = pc.reference_pos - start
         if pc.reference_pos in mutation_info_in_bin:
