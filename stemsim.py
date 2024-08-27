@@ -117,7 +117,12 @@ def parse_config(config_path):
             all_parameter_dict.update({"Total_mutations": int(line.split("=")[1].strip())})
             continue
         if line.startswith("Use_mutation_rate"):
-            all_parameter_dict.update({"Use_mutation_rate": str(line.split("=")[1].strip())})   # "True" or "False"
+            bool_str_temp = str(line.split("=")[1].strip())
+            if bool_str_temp == "True":
+                bool_temp = True
+            else:
+                bool_temp = False
+            all_parameter_dict.update({"Use_mutation_rate": bool_temp})   # True or False
             continue
         if line.startswith("Mutation_rate"):
             all_parameter_dict.update({"Mutation_rate": float(line.split("=")[1].strip())})     # like 5e-05
@@ -479,13 +484,16 @@ def main():
         print("Error! The working model must be camisim or reads.")
         sys.exit()
 
+    my_logger.info(f"The parameters_dict is \n {parameters_dict}")
     # add the parameter of short/long indel
     if parameters_dict["Generate_short_insertion"]:
+        subject_microbial_community.whether_generate_short_insertion = True
         alpha, beta = parameters_dict["Short_insertion_beta_parameter"]
         subject_microbial_community.add_insertion_parameter(alpha, beta, parameters_dict["Short_insertion_number"],
                                                             parameters_dict["Short_insertion_mutation_rate"],
                                                             parameters_dict["Short_insertion_use_mutation_rate"])
     if parameters_dict["Generate_short_deletion"]:
+        subject_microbial_community.whether_generate_short_deletion = True
         alpha, beta = parameters_dict["Short_deletion_beta_parameter"]
         subject_microbial_community.add_deletion_parameter(alpha, beta, parameters_dict["Short_deletion_number"],
                                                            parameters_dict["Short_deletion_mutation_rate"],
