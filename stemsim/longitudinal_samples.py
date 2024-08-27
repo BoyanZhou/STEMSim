@@ -40,12 +40,14 @@ class Subject:
         self.mutation_rate = mutation_rate
         self.substitution_model = substitution_model    # must be JC69, K80, HKY85, TN93, or REV
 
+        self.whether_generate_short_insertion = False
         self.insertion_alpha = 0
         self.insertion_beta = 0
         self.whether_fixed_insertion_number = True
         self.fixed_insertion_number = 0
         self.insertion_mutation_rate = 0
 
+        self.whether_generate_short_deletion = False
         self.deletion_alpha = 0
         self.deletion_beta = 0
         self.whether_fixed_deletion_number = True
@@ -277,24 +279,31 @@ class Subject:
             chr_prop_list = [i/total_length_of_chrs for i in pysam_ref.lengths]   # [1/6, 2/6, 1/6, 2/6], proportions of four chromosomes according to lengths
             # # 1. dict of mutation number assigned to each chromosome by fixed number or relative rate
             if whether_use_mutation_rate_number:
+                self.logger.info(f"Generate mutation using a mutation rate of {self.mutation_rate}")
                 mutation_number_dict = {i: int(j * self.mutation_rate) for i, j in
                                         zip(pysam_ref.references, pysam_ref.lengths)}
             else:
+                self.logger.info(f"Generate mutation using a fixed mutation number of {self.fixed_mutation_number}")
                 mutation_number_dict = {i: j for i, j in zip(pysam_ref.references,
                                                              np.random.multinomial(n=self.fixed_mutation_number,
                                                                                    pvals=chr_prop_list))}
+            self.logger.info(f"Get the mutation number dict {mutation_number_dict}")
 
             # # 2. dict of insertion number assigned to each chromosome by fixed number or relative rate
-            if self.whether_fixed_insertion_number:
-                insertion_dict = {i: self.generate_insertion(j, genome_id) for i, j in zip(pysam_ref.references, np.random.multinomial(n=self.fixed_insertion_number, pvals=chr_prop_list))}
-            else:
-                insertion_dict = {i: self.generate_insertion(int(j*self.insertion_mutation_rate), genome_id) for i, j in zip(pysam_ref.references, pysam_ref.lengths)}
+            insertion_dict = {}
+            if self.whether_generate_short_insertion:
+                if self.whether_fixed_insertion_number:
+                    insertion_dict = {i: self.generate_insertion(j, genome_id) for i, j in zip(pysam_ref.references, np.random.multinomial(n=self.fixed_insertion_number, pvals=chr_prop_list))}
+                else:
+                    insertion_dict = {i: self.generate_insertion(int(j*self.insertion_mutation_rate), genome_id) for i, j in zip(pysam_ref.references, pysam_ref.lengths)}
 
             # # 3. dict of deletion number assigned to each chromosome by fixed number or relative rate
-            if self.whether_fixed_deletion_number:
-                deletion_length_dict = {i: indel.generate_indel_lens(self.deletion_alpha, self.deletion_beta, j) for i, j in zip(pysam_ref.references, np.random.multinomial(n=self.fixed_deletion_number, pvals=chr_prop_list))}
-            else:
-                deletion_length_dict = {i: indel.generate_indel_lens(self.deletion_alpha, self.deletion_beta, int(j*self.deletion_mutation_rate)) for i, j in zip(pysam_ref.references, pysam_ref.lengths)}
+            deletion_length_dict = {}
+            if self.whether_generate_short_deletion:
+                if self.whether_fixed_deletion_number:
+                    deletion_length_dict = {i: indel.generate_indel_lens(self.deletion_alpha, self.deletion_beta, j) for i, j in zip(pysam_ref.references, np.random.multinomial(n=self.fixed_deletion_number, pvals=chr_prop_list))}
+                else:
+                    deletion_length_dict = {i: indel.generate_indel_lens(self.deletion_alpha, self.deletion_beta, int(j*self.deletion_mutation_rate)) for i, j in zip(pysam_ref.references, pysam_ref.lengths)}
 
             # # 4. dict of nonmutated_region {"chr1":[[200, 500], [700, 1000]]}, no overlap, from small to large
             nonmutated_region_dict = self.get_nonmutated_region(genome_id)      # can be empty {}
@@ -350,6 +359,11 @@ class Subject:
             # {"read_name1": {"range_list":[[distance_to_end_start, distance_to_end_end]], "alt_list": [mutation_base]}}
             # 2. list of reads set
             # 3. all_mutation_info is dict, {pos: {"base":[ref, alt], "ref_count": [], "alt_count": []}}
+            self.logger.info(f"input_bam_list: \n{input_bam_list}\n ref_fas_path: \n{ref_fas_path}\n ref_base_prop_vec:\n{ref_base_prop_vec}\n"
+                             f"mutation_traj_combination_dict:\n {mutation_traj_combination_dict}\n nonmutated_region_dict:\n{nonmutated_region_dict}\n "
+                             f"long_insertion_dict:\n{long_insertion_dict}\n long_deletion_dict:\n {long_deletion_dict}\ninsertion_dict:\n{insertion_dict}\n"
+                             f"deletion_length_dict\n {deletion_length_dict} \n mutation_number_dict\n{mutation_number_dict} \n"
+                             f"original_q_matrix: \n{original_q_matrix}")
             reads_mutations_record, reads_to_remove_record, all_mutation_info, long_indel_info = ritm.summarize_reads_to_modify(
                 input_bam_list, ref_fas_path, ref_base_prop_vec, mutation_traj_combination_dict, nonmutated_region_dict,
                 long_insertion_dict, long_deletion_dict, insertion_dict, deletion_length_dict, mutation_number_dict,
@@ -404,7 +418,7 @@ class Subject:
                     output_fq2_path = os.path.join(output_dir, f"{self.ID}_{genome_id}_t{fq_index}_mutated_R2.fq")
                     mf.generate_modified_paired_fqs(processed_fq_path[0], processed_fq_path[1], output_fq1_path, output_fq2_path,
                                                     reads_mutations_record[fq_index],
-                                                    reads_to_remove_record[fq_index], whether_gzip=True)
+                                                    reads_to_remove_record[fq_index], self.logger, whether_gzip=True)
                     genome_id_modified_fq_dict[genome_id].append([f"{output_fq1_path}.gz", f"{output_fq2_path}.gz"])
         # --------------------------------------------------------------------------------------------------------------
         # whether pool the modified reads from each genome/species/strain
@@ -450,7 +464,8 @@ class Subject:
     def output_truth_of_mutation(self, mutation_info_dict, output_dir, geno_id, chr_name_list, geno_id_snpeff_id_dict, snpeff_dir=""):
         """
         :param mutation_info_dict: {chr_name: {{position: {"type": "deletion", "base": [ref_base, mutated_base],
-                                    "ref_count": [0] * len(input_bam_list), "alt_count": [0] * len(input_bam_list)}}}}
+                                    "ref_count": [0] * len(input_bam_list), "alt_count": [0] * len(input_bam_list),
+                                    'longitudinal_prop': array([0.45648464, 0.27124586, 0.10524191])}}}}
         :param output_dir:
         :param geno_id: the genome id of species/strain, e.g. Geno1.0
         :param chr_name_list: chr name of this genome
@@ -470,6 +485,7 @@ class Subject:
                                   f"##source=STEMSim\n"
                                   f"##reference={self.genome_id_fas_dict[geno_id]}\n"
                                   f'##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">\n'
+                                  f'##INFO=<ID=LP,Number=1,Type=Float,Description="Longitudinal Proportion of Mutations">\n'
                                   f'##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
                                   f'##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">\n'
                                   f'##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths for the ref and alt alleles in the order listed">\n'
@@ -484,8 +500,9 @@ class Subject:
                         ref_base, mutated_base = mutation_info_in_chr_at_pos_dict["base"]
                         ref_count_list = mutation_info_in_chr_at_pos_dict["ref_count"]
                         alt_count_list = mutation_info_in_chr_at_pos_dict["alt_count"]
+                        longitudinal_prop = mutation_info_in_chr_at_pos_dict['longitudinal_prop']
                         total_dp = sum(ref_count_list) + sum(alt_count_list)
-                        INFO = f"DP={total_dp}"             # total depth of all samples
+                        INFO = f"DP={total_dp};LP={','.join(np.round(longitudinal_prop, 3).astype(str))}" # total depth of all samples;longitudinal_prop
                         FORMAT = "GT:DP:AD"     # DP for this sample
                         sample_info_list = []
                         # get GT

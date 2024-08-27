@@ -135,7 +135,7 @@ def generate_modified_fq(input_fq_path, output_fq_path, read_info_to_change_dict
 
 # main function2 for paired fqs
 def generate_modified_paired_fqs(input_fq1_path, input_fq2_path, output_fq1_path, output_fq2_path,
-                                 read_info_to_change_dict, reads_to_remove_set, whether_gzip=True):
+                                 read_info_to_change_dict, reads_to_remove_set, logger, whether_gzip=True):
     """
     Modify the raw simulated reads according to read_info_to_change_dict, interrogate the name of each read, to check
     whether it is in the read_info_to_change_dict, then change it accordingly
@@ -151,6 +151,11 @@ def generate_modified_paired_fqs(input_fq1_path, input_fq2_path, output_fq1_path
     :param whether_gzip:
     :return:
     """
+    logger.info(f"Generating mutations to {input_fq1_path} & {input_fq2_path}\n"
+                f"To get {output_fq1_path} & {output_fq2_path} that have mutated reads ...")
+    logger.info(f"read_info_to_change_dict is \n{read_info_to_change_dict}\n"
+                f"reads_to_remove_set is \n{reads_to_remove_set}")
+
     output_fq1_f = open(output_fq1_path, "w")
     output_fq2_f = open(output_fq2_path, "w")
     output_fq_f_list = [output_fq1_f, output_fq2_f]
@@ -164,8 +169,9 @@ def generate_modified_paired_fqs(input_fq1_path, input_fq2_path, output_fq1_path
         if not line1:
             break   # break at the end of input fastq
 
-        read_name1 = line1[1:-1]
-        read_name2 = line2[1:-1]
+        # Warning! The read_name format of paired-end is different from that of single-end
+        read_name1 = line1[1:-3]    # "@NC_017218.1-116926/1"
+        read_name2 = line2[1:-3]    # "@NC_017218.1-116926/2"
         read_name_list = [read_name1, read_name2]
         sequences_list = [input_fq1_f.readline().strip(), input_fq2_f.readline().strip()]   # 2nd line of 4
 
@@ -207,7 +213,7 @@ def generate_modified_paired_fqs(input_fq1_path, input_fq2_path, output_fq1_path
                     if len(alt) > 1:
                         whether_contain_indel = True
                     new_sequence += alt + sequences_list[fq_index][remaining_region[0]:remaining_region[1]]
-
+                logger.info(f"read: {read_name} in the read_info_to_change_dict. Write new sequence \n {new_sequence}")
                 output_fq_f_list[fq_index].write(new_sequence + "\n")                   # output 2nd line of 4
                 output_fq_f_list[fq_index].write(input_fq_f_list[fq_index].readline())  # output 3rd line of 4
                 # we need to modify the base quality sequence
